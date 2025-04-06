@@ -136,6 +136,7 @@
         let currentWishIndex = 0;
         let cakeComplete = false;
         let textComplete = false;
+        let isPlaying = false;
         
         // 修改初始化函数
         function init() {
@@ -144,24 +145,28 @@
             fireworksCanvas.height = window.innerHeight;
             fireworksCtx = fireworksCanvas.getContext('2d');
             
-            // 尝试自动播放音乐
-            tryPlayMusic();
-            
             // 音乐控制按钮
             musicButton.addEventListener('click', () => {
-                if (bgm.paused) {
-                    tryPlayMusic();
-                } else {
+                if (isPlaying) {
                     bgm.pause();
+                    isPlaying = false;
                     musicButton.textContent = "♪";
+                } else {
+                    bgm.play().then(() => {
+                        isPlaying = true;
+                        musicButton.textContent = "♫";
+                    }).catch(error => {
+                        console.log('播放失败:', error);
+                        isPlaying = false;
+                        musicButton.textContent = "♪";
+                    });
                 }
             });
 
-            // 添加页面点击事件来触发音乐播放
-            document.addEventListener('click', () => {
-                if (bgm.paused) {
-                    tryPlayMusic();
-                }
+            // 音乐结束事件
+            bgm.addEventListener('ended', () => {
+                isPlaying = false;
+                musicButton.textContent = "♪";
             });
 
             // 立即开始烟花动画
@@ -169,15 +174,6 @@
             
             // 开始显示流程
             startDisplayProcess();
-        }
-
-        // 添加尝试播放音乐的函数
-        function tryPlayMusic() {
-            bgm.play().then(() => {
-                musicButton.textContent = "♫";
-            }).catch(error => {
-                console.log('自动播放失败，需要用户交互:', error);
-            });
         }
 
         // 新的显示流程控制函数
@@ -205,8 +201,6 @@
                 cakeImage.style.opacity = '1';
                 cakeComplete = true;
                 checkTransition();
-                // 再次尝试播放音乐
-                tryPlayMusic();
             }, 1000);
             
             // 开始显示祝福语
@@ -265,9 +259,6 @@
                 happyBirthday.style.textShadow = '0 0 10px #FF69B4, 0 0 20px #FF69B4';
                 happyBirthday.style.zIndex = '3';
                 document.body.appendChild(happyBirthday);
-                
-                // 确保音乐在最后一定会播放
-                tryPlayMusic();
             }
         }
         
