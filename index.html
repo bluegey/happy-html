@@ -119,7 +119,7 @@
         <button id="music-button">♪</button>
     </div>
     
-    <audio id="bgm" loop preload="auto">
+    <audio id="bgm" preload="auto">
         <source src="./music/dylanf.mp3" type="audio/mp3">
     </audio>
 
@@ -137,6 +137,7 @@
         let cakeComplete = false;
         let textComplete = false;
         let isPlaying = false;
+        let hasUserInteracted = false;
         
         // 修改初始化函数
         function init() {
@@ -145,27 +146,51 @@
             fireworksCanvas.height = window.innerHeight;
             fireworksCtx = fireworksCanvas.getContext('2d');
             
+            // 添加用户交互检测
+            document.addEventListener('touchstart', () => {
+                hasUserInteracted = true;
+            }, { once: true });
+            
+            document.addEventListener('click', () => {
+                hasUserInteracted = true;
+            }, { once: true });
+            
             // 音乐控制按钮
             musicButton.addEventListener('click', () => {
+                hasUserInteracted = true;
                 if (isPlaying) {
                     bgm.pause();
                     isPlaying = false;
                     musicButton.textContent = "♪";
                 } else {
-                    bgm.play().then(() => {
-                        isPlaying = true;
-                        musicButton.textContent = "♫";
-                    }).catch(error => {
-                        console.log('播放失败:', error);
-                        isPlaying = false;
-                        musicButton.textContent = "♪";
-                    });
+                    // 确保音频已加载
+                    if (bgm.readyState === 0) {
+                        bgm.load();
+                    }
+                    
+                    const playPromise = bgm.play();
+                    if (playPromise !== undefined) {
+                        playPromise.then(() => {
+                            isPlaying = true;
+                            musicButton.textContent = "♫";
+                        }).catch(error => {
+                            console.log('播放失败:', error);
+                            isPlaying = false;
+                            musicButton.textContent = "♪";
+                        });
+                    }
                 }
             });
 
             // 音乐结束事件
             bgm.addEventListener('ended', () => {
                 isPlaying = false;
+                musicButton.textContent = "♪";
+            });
+
+            // 音频加载错误处理
+            bgm.addEventListener('error', (e) => {
+                console.log('音频加载错误:', e);
                 musicButton.textContent = "♪";
             });
 
